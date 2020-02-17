@@ -248,6 +248,13 @@
                 </td>
                 <td class="text-center pa-1 small">
                   {{ computeSkillPool(item) }}
+                  <span v-if="item.bonusDice && item.bonusDice > 0">(+{{item.bonusDice}})</span>
+                  <v-tooltip bottom v-if="item.bonusDice && item.bonusDice > 0">
+                    <template v-slot:activator="{ on }">
+                      <v-avatar color="success" size="12" v-on="on"><v-icon dark small>arrow_drop_up</v-icon></v-avatar>
+                    </template>
+                    <span>{{item.bonusDiceSource.map((s)=>s.hint).join(',')}}</span>
+                  </v-tooltip>
                 </td>
               </tr>
               </tbody>
@@ -880,11 +887,31 @@ export default {
     },
     skills() {
       const skills = this.$store.getters['characters/characterSkillsById'](this.characterId);
-      return this.skillRepository.map((s) => ({
+      let skillList = this.skillRepository.map((s) => ({
         ...s,
         value: skills[s.key],
         enhancedValue: skills[s.key],
+        bonusDice: 0,
+        bonusDiceSource: [],
       }));
+      if ( this.characterSpecies ) {
+        const featuresWithBonusDice = this.characterSpecies.speciesFeatures.filter((feature)=>feature.bonusDice && feature.bonusDice.length > 0);
+        featuresWithBonusDice.forEach((diceFeature)=>{
+          diceFeature.bonusDice.forEach((bonusDice)=>{
+            // { key: 'intimidation', static: 1, condition: undefined },
+            let skilly = skillList.find((skill)=>skill.key===bonusDice.key);
+            skilly.bonusDice += bonusDice.static;
+            skilly.bonusDiceSource.push({ value: bonusDice.static, hint: `add ${bonusDice.static} bonus dice${bonusDice.condition ? ', '+bonusDice.condition : ''}.` });
+          });
+        });
+        /*
+        bonusDice: 1,
+        bonusDiceSource: [
+          { value: 2, hint: '+2 bonus dice against Imperium Keyword' },
+        ],
+       */
+      }
+      return skillList;
     },
     enhancements() {
       return this.$store.getters['characters/characterEnhancementsById'](this.characterId);

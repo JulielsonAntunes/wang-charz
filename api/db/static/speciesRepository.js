@@ -244,6 +244,9 @@ const coreRep = [
       {
         name: 'Orky',
         snippet: '+1 to all Intimidation tests.',
+        bonusDice: [
+          { key: 'intimidation', static: 1, condition: undefined },
+        ],
       },
       {
         name: 'Bigger is Better',
